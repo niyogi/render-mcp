@@ -1,3 +1,5 @@
+[![MseeP.ai Security Assessment Badge](https://mseep.net/pr/niyogi-render-mcp-badge.png)](https://mseep.ai/app/niyogi-render-mcp)
+
 # Render MCP Server
 
 Deploy to [Render.com](https://render.com) directly through AI assistants.
