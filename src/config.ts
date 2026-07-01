@@ -13,7 +13,9 @@ const readFile = promisify(fs.readFile);
  * Configuration for the Render MCP server
  */
 export interface RenderConfig {
-  apiKey: string;
+  apiKey?: string;
+  /** Currently selected workspace/owner ID, used as the default for create_* tools and logs/metrics. */
+  selectedOwnerId?: string;
 }
 
 /**
@@ -55,7 +57,7 @@ export async function saveConfig(config: RenderConfig): Promise<void> {
     }
     
     await writeFile(CONFIG_FILE, JSON.stringify(config, null, 2));
-    console.log(`Configuration saved to ${CONFIG_FILE}`);
+    console.error(`Configuration saved to ${CONFIG_FILE}`);
   } catch (error) {
     console.error('Error saving config:', error);
     throw new Error(`Failed to save configuration: ${error}`);
@@ -94,7 +96,8 @@ export async function configureApiKey(apiKey?: string): Promise<void> {
       throw new Error('Invalid API key');
     }
     
-    await saveConfig({ apiKey: key });
+    const existing = (await getConfig()) || {};
+    await saveConfig({ ...existing, apiKey: key });
     console.log('API key configured successfully');
   } catch (error) {
     console.error('Error testing API key:', error);
@@ -157,6 +160,24 @@ export async function runDiagnostics(): Promise<void> {
     console.error('API connection: Failed');
     console.error(`Error: ${error}`);
   }
+}
+
+/**
+ * Get the currently selected workspace/owner ID from config.
+ * @returns The selected owner ID, or null if none has been selected
+ */
+export async function getSelectedOwnerId(): Promise<string | null> {
+  const config = await getConfig();
+  return config?.selectedOwnerId || null;
+}
+
+/**
+ * Persist the selected workspace/owner ID, preserving the rest of the config.
+ * @param ownerId Owner ID to select
+ */
+export async function setSelectedOwnerId(ownerId: string): Promise<void> {
+  const existing = (await getConfig()) || {};
+  await saveConfig({ ...existing, selectedOwnerId: ownerId });
 }
 
 /**

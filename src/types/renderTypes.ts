@@ -120,3 +120,80 @@ export interface PaginatedResponse<T> {
   data: T[];
   cursor?: string;
 }
+
+/**
+ * A Render workspace/owner (user or team).
+ */
+export interface Owner {
+  id: string;
+  name: string;
+  email?: string;
+  type?: string;
+}
+
+/**
+ * Filters accepted by the Render logs API (GET /v1/logs).
+ * ownerId is required; all other fields are optional filters.
+ */
+export interface LogQueryParams {
+  ownerId: string;
+  resource?: string[];
+  instance?: string[];
+  type?: string[];
+  level?: string[];
+  text?: string[];
+  host?: string[];
+  statusCode?: string[];
+  method?: string[];
+  path?: string[];
+  startTime?: string;
+  endTime?: string;
+  direction?: 'backward' | 'forward';
+  limit?: number;
+}
+
+/**
+ * Parameters for fetching metrics (GET /v1/metrics/*).
+ */
+export interface MetricsQueryParams {
+  resourceId: string;
+  metricTypes: string[];
+  startTime?: string;
+  endTime?: string;
+  resolutionSeconds?: number;
+}
+
+/**
+ * Request body for creating a Render Postgres instance (POST /v1/postgres).
+ */
+export interface CreatePostgresRequest {
+  name: string;
+  ownerId: string;
+  plan: string;
+  region?: string;
+  version?: string;
+  databaseName?: string;
+  databaseUser?: string;
+  diskSizeGB?: number;
+  highAvailabilityEnabled?: boolean;
+}
+
+/**
+ * Request body for creating a Render Key Value instance (POST /v1/key-value).
+ */
+export interface CreateKeyValueRequest {
+  name: string;
+  ownerId: string;
+  plan: string;
+  region?: string;
+  maxmemoryPolicy?: string;
+}
+
+/**
+ * Parameters for listing datastores/services scoped to owners.
+ */
+export interface ListResourceParams {
+  ownerId?: string[];
+  limit?: number;
+  cursor?: string;
+}
