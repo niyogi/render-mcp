@@ -6,14 +6,37 @@ This MCP (Model Context Protocol) server allows AI assistants like Claude to int
 
 ## Features
 
-- List all services in your Render account
-- Get details of a specific service
-- Deploy services
-- Create new services
-- Delete services
-- Get deployment history
-- Manage environment variables
-- Manage custom domains
+This server covers everything Render's official MCP server does **plus** mutating
+operations their server intentionally omits (triggering deploys, deleting resources,
+managing custom domains, restarting, and cancelling deploys).
+
+**Services**
+- List all services and get details of a specific service
+- Create services: generic `create_service` plus typed `create_web_service`,
+  `create_static_site`, and `create_cron_job`
+- Deploy, restart, and delete services
+- Manage environment variables and custom domains
+
+**Deploys**
+- Get deployment history, get a single deploy, and cancel an in-progress deploy
+
+**Workspaces**
+- List workspaces, get workspace details, and select a default workspace so
+  create/logs/metrics tools don't need an `ownerId` each call
+
+**Observability**
+- List and filter logs (`list_logs`) and enumerate log label values
+- Fetch performance metrics (`get_metrics`): CPU, memory, HTTP requests/latency,
+  bandwidth, instance count, active connections
+
+**Datastores**
+- Postgres: list, get, create, and run **read-only** SQL queries (`query_render_postgres`)
+- Key Value (Redis): list, get, and create instances
+
+> **Note on `query_render_postgres`:** this tool connects to your database using the
+> `pg` driver and enforces read-only access (single statement, `SELECT`/`WITH`/
+> `EXPLAIN`/`SHOW` only, run inside a `READ ONLY` transaction). Run `npm install`
+> after installing the package to ensure the `pg` dependency is present.
 
 ## Installation
 
@@ -60,6 +83,45 @@ render-mcp doctor
 ```
 
 ## Using with Different AI Assistants
+
+### Using with Claude Code
+
+The quickest way is the `claude mcp add` CLI, which registers the server via `npx`
+(no global install needed):
+
+```bash
+claude mcp add render -e RENDER_API_KEY=YOUR_API_KEY -- npx -y @niyogi/render-mcp start
+```
+
+By default this adds the server to the current project. Use a scope flag to change that:
+
+- `-s user` — available across all your projects
+- `-s project` — shared with your team via a checked-in `.mcp.json`
+- `-s local` (default) — just this project, only for you
+
+Alternatively, add it manually to your MCP config (`.mcp.json` in the project root,
+or `~/.claude.json` for user scope):
+
+```json
+{
+  "mcpServers": {
+    "render": {
+      "command": "npx",
+      "args": ["-y", "@niyogi/render-mcp", "start"],
+      "env": {
+        "RENDER_API_KEY": "YOUR_API_KEY"
+      }
+    }
+  }
+}
+```
+
+Instead of passing the key via `env`, you can store it once with
+`npx @niyogi/render-mcp configure` (saved to `~/.render-mcp/config.json`) and omit
+the `env` block.
+
+Then verify the connection inside Claude Code with the `/mcp` command — `render`
+should appear as connected and its tools listed.
 
 ### Using with Cline
 
@@ -149,6 +211,12 @@ Here are some example prompts you can use with Claude once the MCP server is con
 - "Show me the deployment history for my service"
 - "Add an environment variable to my service"
 - "Add a custom domain to my service"
+- "List my Render workspaces and select the team one"
+- "Show me the error logs for srv-123456 from the last hour"
+- "What's the CPU and memory usage for srv-123456?"
+- "Query my Render Postgres: SELECT count(*) FROM users"
+- "Restart my service srv-123456"
+- "Create a Postgres database and a Redis instance for my app"
 
 ## Development
 
